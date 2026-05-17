@@ -18,6 +18,7 @@ export interface Shop {
   reputation: number;
   createdAt: number;
   lastActivity: number;
+  icon: string;
 }
 
 export interface CartItem {
@@ -68,6 +69,19 @@ export function getShops(): Shop[] {
 }
 export function saveShops(shops: Shop[]) {
   saveJSON(SHOPS_KEY, shops);
+}
+export function addShop(s: Omit<Shop, 'id' | 'purchases' | 'createdAt' | 'lastActivity'>) {
+  const shops = getShops();
+  const newS: Shop = { ...s, id: crypto.randomUUID(), purchases: 0, createdAt: Date.now(), lastActivity: Date.now() };
+  saveShops([...shops, newS]);
+  return newS;
+}
+export function updateShop(id: string, updates: Partial<Shop>) {
+  saveShops(getShops().map(s => s.id === id ? { ...s, ...updates } : s));
+}
+export function deleteShop(id: string) {
+  saveShops(getShops().filter(s => s.id !== id));
+  saveProducts(getProducts().filter(p => p.shopId !== id));
 }
 export function getRankedShops(): (Shop & { score: number; rank: number })[] {
   const shops = getShops();
@@ -153,26 +167,28 @@ export function toggleFav(productId: string) {
 }
 
 /* ---- DEFAULTS ---- */
+export const SHOP_ICONS = ['🕶️', '👻', '🔐', '🌐', '💀', '🧪', '⚡', '🦠', '🔮', '🛡️', '🎭', '🌑', '🔧', '💾', '🗝️', '🧬', '🕷️', '🌀'];
+
 function defaultShops(): Shop[] {
   return [
-    { id: 's1', name: 'ShadowVault', description: 'Эксклюзивные цифровые активы и данные', niches: ['данные', 'аккаунты', 'доступы'], purchases: 142, reputation: 91, createdAt: Date.now() - 86400000 * 30, lastActivity: Date.now() - 3600000 },
-    { id: 's2', name: 'GhostMarket', description: 'Программное обеспечение и инструменты', niches: ['ПО', 'инструменты', 'скрипты'], purchases: 98, reputation: 78, createdAt: Date.now() - 86400000 * 20, lastActivity: Date.now() - 7200000 },
-    { id: 's3', name: 'NullPointer', description: 'Уязвимости и эксплойты', niches: ['эксплойты', 'уязвимости'], purchases: 67, reputation: 85, createdAt: Date.now() - 86400000 * 45, lastActivity: Date.now() - 86400000 },
-    { id: 's4', name: 'DeepLayer', description: 'Анонимные сервисы и VPN', niches: ['VPN', 'анонимность'], purchases: 203, reputation: 72, createdAt: Date.now() - 86400000 * 60, lastActivity: Date.now() - 1800000 },
-    { id: 's5', name: 'ZeroTrace', description: 'Документы и удостоверения', niches: ['документы', 'верификация', 'ID'], purchases: 34, reputation: 65, createdAt: Date.now() - 86400000 * 10, lastActivity: Date.now() - 43200000 },
+    { id: 's1', name: 'ShadowVault', description: 'Эксклюзивные цифровые активы и данные', niches: ['данные', 'аккаунты', 'доступы'], purchases: 142, reputation: 91, createdAt: Date.now() - 86400000 * 30, lastActivity: Date.now() - 3600000, icon: '🔐' },
+    { id: 's2', name: 'GhostMarket', description: 'Программное обеспечение и инструменты', niches: ['ПО', 'инструменты', 'скрипты'], purchases: 98, reputation: 78, createdAt: Date.now() - 86400000 * 20, lastActivity: Date.now() - 7200000, icon: '👻' },
+    { id: 's3', name: 'NullPointer', description: 'Уязвимости и эксплойты', niches: ['эксплойты', 'уязвимости'], purchases: 67, reputation: 85, createdAt: Date.now() - 86400000 * 45, lastActivity: Date.now() - 86400000, icon: '💀' },
+    { id: 's4', name: 'DeepLayer', description: 'Анонимные сервисы и VPN', niches: ['VPN', 'анонимность'], purchases: 203, reputation: 72, createdAt: Date.now() - 86400000 * 60, lastActivity: Date.now() - 1800000, icon: '🌐' },
+    { id: 's5', name: 'ZeroTrace', description: 'Документы и удостоверения', niches: ['документы', 'верификация', 'ID'], purchases: 34, reputation: 65, createdAt: Date.now() - 86400000 * 10, lastActivity: Date.now() - 43200000, icon: '🕶️' },
   ];
 }
 
 function defaultProducts(): Product[] {
   return [
-    { id: 'p1', name: 'Пакет аккаунтов Premium', price: 0.012, category: 'данные', description: 'Верифицированные аккаунты соцсетей, пакет 50 шт', shopId: 's1', purchases: 89, createdAt: Date.now() - 86400000 * 5 },
-    { id: 'p2', name: 'VPN x10 ключей', price: 0.008, category: 'анонимность', description: '10 ключей VPN с логированием OFF', shopId: 's4', purchases: 134, createdAt: Date.now() - 86400000 * 8 },
-    { id: 'p3', name: 'SSH Brute Kit', price: 0.025, category: 'инструменты', description: 'Набор инструментов для брутфорса SSH', shopId: 's2', purchases: 45, createdAt: Date.now() - 86400000 * 12 },
-    { id: 'p4', name: 'Zero-Day Exploit Pack', price: 0.18, category: 'эксплойты', description: 'Актуальные уязвимости 2024, подборка 5 шт', shopId: 's3', purchases: 12, createdAt: Date.now() - 86400000 * 3 },
-    { id: 'p5', name: 'Анонимный E-Mail x20', price: 0.005, category: 'данные', description: 'Зарегистрированные анонимные почтовые ящики', shopId: 's1', purchases: 67, createdAt: Date.now() - 86400000 * 7 },
-    { id: 'p6', name: 'RDP доступы US', price: 0.035, category: 'доступы', description: 'Актуальные RDP доступы к серверам США', shopId: 's1', purchases: 28, createdAt: Date.now() - 86400000 * 2 },
-    { id: 'p7', name: 'Tor Relay Setup', price: 0.003, category: 'анонимность', description: 'Автоматический скрипт настройки Tor реле', shopId: 's4', purchases: 92, createdAt: Date.now() - 86400000 * 15 },
-    { id: 'p8', name: 'Keylogger Pro', price: 0.042, category: 'ПО', description: 'Невидимый кейлоггер с удалённым сервером', shopId: 's2', purchases: 31, createdAt: Date.now() - 86400000 * 9 },
+    { id: 'p1', name: 'Пакет аккаунтов Premium', price: 49, category: 'данные', description: 'Верифицированные аккаунты соцсетей, пакет 50 шт', shopId: 's1', purchases: 89, createdAt: Date.now() - 86400000 * 5 },
+    { id: 'p2', name: 'VPN x10 ключей', price: 29, category: 'анонимность', description: '10 ключей VPN с логированием OFF', shopId: 's4', purchases: 134, createdAt: Date.now() - 86400000 * 8 },
+    { id: 'p3', name: 'SSH Brute Kit', price: 89, category: 'инструменты', description: 'Набор инструментов для брутфорса SSH', shopId: 's2', purchases: 45, createdAt: Date.now() - 86400000 * 12 },
+    { id: 'p4', name: 'Zero-Day Exploit Pack', price: 650, category: 'эксплойты', description: 'Актуальные уязвимости 2024, подборка 5 шт', shopId: 's3', purchases: 12, createdAt: Date.now() - 86400000 * 3 },
+    { id: 'p5', name: 'Анонимный E-Mail x20', price: 18, category: 'данные', description: 'Зарегистрированные анонимные почтовые ящики', shopId: 's1', purchases: 67, createdAt: Date.now() - 86400000 * 7 },
+    { id: 'p6', name: 'RDP доступы US', price: 120, category: 'доступы', description: 'Актуальные RDP доступы к серверам США', shopId: 's1', purchases: 28, createdAt: Date.now() - 86400000 * 2 },
+    { id: 'p7', name: 'Tor Relay Setup', price: 9, category: 'анонимность', description: 'Автоматический скрипт настройки Tor реле', shopId: 's4', purchases: 92, createdAt: Date.now() - 86400000 * 15 },
+    { id: 'p8', name: 'Keylogger Pro', price: 149, category: 'ПО', description: 'Невидимый кейлоггер с удалённым сервером', shopId: 's2', purchases: 31, createdAt: Date.now() - 86400000 * 9 },
   ];
 }
 
